@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if hostname | grep -q master; then
+   sudo kubeadm init --pod-network-cidr 10.244.0.0/16 \
+                     --apiserver-advertise-address $(ip -br a | grep $(awk -F= '/^IP_NW/{print $2}' Vagrantfile | sed s'/"//g')  | awk '{print $3}' | cut -d/ -f1) | \
+                     tee cluster.log
+   sed -ne '/^To start using your cluster/,/^Alternatively/p' cluster.log | grep -A3 mkdir | bash
+
+   # install weave network
+   kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+
+   echo Checking if weave-net is up
+   while [[ $(kubectl -n kube-system get po -l name=weave-net -o jsonpath='{.items[*].status.containerStatuses[*].started}'  | grep -w true | wc -w) -ne 2 ]]; do
+      echo  Weave-net not ready. Will check again in 10 seconds
+      sleep 10
+   done
+   echo
+   echo add the following environment variable to weave-net daemonset manifest
+   cat <EOF
+   - name: IPALLOC_RANGE
+     value: 10.244.0.0/16
+EOF
+   echo and then join the node to the cluster by running the following command:
+   grep -A3 "kubeadm join" cluster.log
+
+fi

@@ -23,6 +23,7 @@ Vagrant.configure("2") do |config|
   # boxes at https://vagrantcloud.com/search.
   # config.vm.box = "base"
   config.vm.box = "ubuntu/bionic64"
+  #config.vm.box = "alvistack/ubuntu-22.04"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -40,6 +41,10 @@ Vagrant.configure("2") do |config|
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
 
+  config.vm.provision "file", source: "prepare-vagrant", destination: "prepare-vagrant"
+  config.vm.provision "file", source: "install-master", destination: "install-master"
+  config.vm.provision "file", source: "Vagrantfile", destination: "Vagrantfile"
+  config.vm.provision "file", source: "config.toml", destination: "config.toml"
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
@@ -70,6 +75,7 @@ Vagrant.configure("2") do |config|
         end
 
         node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/update-dns.sh"
+        node.vm.provision "prepare-vagrant", type: "shell", :path => "prepare-vagrant"
 
       end
   end
@@ -92,6 +98,7 @@ Vagrant.configure("2") do |config|
         end
 
         node.vm.provision "setup-dns", type: "shell", :path => "ubuntu/update-dns.sh"
+#        node.vm.provision "prepare-vagrant", type: "shell", :path => "prepare-vagrant"
     end
   end
 end
